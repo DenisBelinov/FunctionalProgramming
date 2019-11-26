@@ -250,7 +250,11 @@ canonicalise (b :. Zero) =
 -- integerToBitVector 5 -- End :. One :. Zero :. One
 -- integerToBitVector 7 -- End :. One :. One :. One
 integerToBitVector :: Integer -> BitVector
-integerToBitVector = undefined
+integerToBitVector 0 = End
+integerToBitVector i =
+    if (mod i 2) == 0
+    then integerToBitVector (div i 2) :. Zero
+    else integerToBitVector (div i 2) :. One
 
 -- EXERCISE: Convert a BitVector to a number
 -- EXAMPLES:
@@ -258,7 +262,9 @@ integerToBitVector = undefined
 -- integerToBitVector 69 -- End :. One :. Zero :. Zero :. Zero :. One :. Zero :. One
 -- integerToBitVector 16 -- End :. One :. Zero :. Zero :. Zero :. Zero
 bitVectorToInteger :: BitVector -> Integer
-bitVectorToInteger = undefined
+bitVectorToInteger End = 0
+bitVectorToInteger (b :. One) = (bitVectorToInteger b) * 2 + 1
+bitVectorToInteger (b :. Zero) = (bitVectorToInteger b) * 2
 -- HINT: It would be easier to first canonicalise the bitvectors!
 
 -- EXERCISE: BitVector addition
@@ -272,4 +278,8 @@ bitVectorToInteger = undefined
 -- addBitVector (End :. One) (End :. Zero) -- End :. One
 -- addBitVector (End :. One :. Zero) (End :. One :. Zero :. Zero) -- End :. One :. One :. Zero
 addBitVector :: BitVector -> BitVector -> BitVector
-addBitVector = undefined
+addBitVector a End = a
+addBitVector End b = b
+addBitVector (a :. One) (b :. One) = (addBitVector (succBitVector a) b) :. Zero
+addBitVector (a :. Zero) (b :. Zero) = (addBitVector a b) :. Zero
+addBitVector (a :. _) (b :. _) = (addBitVector a b) :. One
