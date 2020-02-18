@@ -16,7 +16,7 @@ type Path = [String]
 -- ["/asd/asd2", ...] -> ["/", "asd", "asd2"]
 splitParts :: [String] -> [String]
 splitParts [] = []
-splitParts (s:_) = if (head s) == '/'
+splitParts (s:xs) = if (head s) == '/'
                     then "/" : splitted
                     else splitted
                   where splitted = words (map (\c -> if c == '/' then ' ' else c) s)
@@ -55,7 +55,7 @@ executor (filesystem, currentDir) = do
 -- checks if the given target path is relative or full
 -- if it is relative, adds the current directory in the beggining
 getFullPath :: Path -> Path -> Path
-getFullPath _ t@("/":_) = t
+getFullPath _ t@("/":xs) = t
 getFullPath curr tgt = curr ++ tgt
 
 -- checks if the File has a child with the given name
@@ -77,7 +77,7 @@ goToPath (Just filesystem) (x:x2:xs) = if x == (name filesystem)
 
 -- Returns the File object in the filesystem with the given FULL PATH if it is a TextFile
 goToFile :: File -> Path -> Maybe File
-goToFile _ [] = Nothing
+gotToFile _ [] = Nothing
 goToFile filesystem path = case parentPath of
                            Just p -> case (getChildByName (last path) p) of
                                      Nothing -> Nothing
@@ -100,31 +100,18 @@ listChildren filesystem currentDir targetPath = case (goToPath (Just filesystem)
 changeCurrentDir :: File -> Path -> [String] -> [String]
 changeCurrentDir _ currentDir [] = currentDir
 changeCurrentDir filesystem currentDir targetPath = case (goToPath (Just filesystem) fullPath) of
-                                                    Just _ -> fullPath --we have such a directory, return the path
+                                                    Just a -> targetPath --we have such a directory, return the path
                                                     Nothing -> currentDir -- we have no such directory, stay at old one
                                                  where fullPath = getFullPath currentDir targetPath
 
 
--- cat one file
+--cat
 getFileContent :: File -> Path -> Path -> String
 getFileContent filesystem currentDir targetPath = case (goToFile filesystem fullPath) of
                                                   Just a -> content a --we have such a directory, return the path
                                                   Nothing -> [] -- we have no such directory, stay at old one
                                               where fullPath = getFullPath currentDir targetPath
 
--- cat multiple files
-getContentOfFiles :: File -> Path -> [Path] -> String
-getContentOfFiles filesystem currentDir paths = concat ((map $ getFileContent filesystem currentDir) paths)
-
-addChildFile :: File -> File -> File
-addChildFile t@(TextFile _ _ _) _ = t
-addChildFile sourceDir file = (Directory (name sourceDir) (file : (children sourceDir)))
 
 catFiles :: File -> Path -> [Path] -> String
-catFiles filesystem currentDir paths = "Bla"
-                                   where cnt = (getContentOfFiles filesystem currentDir (init paths))
-                                         targetFilePath = getFullPath currentDir (last paths)
-                                         fileName = last targetFilePath
-                                         dirName = init targetFilePath
-                                         file = (TextFile fileName cnt [])
-                                         dir = goToPath (Just filesystem) dirName
+catFiles filesystem currentDir paths = concat ((map $ getFileContent filesystem currentDir) (init paths))
